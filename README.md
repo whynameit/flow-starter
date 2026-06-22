@@ -6,7 +6,7 @@
 
 ## 主要功能
 
-- 读取 WEMUST 导出的 Excel 课表。
+- 读取导出的 Excel 课表。
 - 使用 Claude API 拆解目标和修正任务。
 - 自动生成多个排程方案，默认使用 `risk_first`。
 - 导出 Apple Calendar `.ics` 提醒。
