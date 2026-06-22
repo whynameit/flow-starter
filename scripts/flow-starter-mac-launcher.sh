@@ -6,11 +6,11 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-LOG_DIR="$PROJECT_ROOT/.studyflow"
+LOG_DIR="$PROJECT_ROOT/.flow-starter"
 LOG_FILE="$LOG_DIR/last-app-run.log"
-PROMPT_SRC="$PROJECT_ROOT/scripts/studyflow_prompt.swift"
-PROMPT_BIN="$PROJECT_ROOT/scripts/studyflow_prompt"
-BUILD_CACHE="$PROJECT_ROOT/.studyflow/build-cache"
+PROMPT_SRC="$PROJECT_ROOT/scripts/flow-starter-prompt.swift"
+PROMPT_BIN="$PROJECT_ROOT/scripts/flow-starter-prompt"
+BUILD_CACHE="$PROJECT_ROOT/.flow-starter/swift-cache"
 mkdir -p "$LOG_DIR"
 
 alert() {
@@ -38,7 +38,7 @@ show_log_choice() {
 ensure_prompt_helper() {
   if [[ ! -x "$PROMPT_BIN" || "$PROMPT_SRC" -nt "$PROMPT_BIN" ]]; then
     if ! command -v swiftc >/dev/null 2>&1; then
-      alert "StudyFlow" "缺少 Swift 编译器，无法打开多行输入弹窗。请先安装 Xcode Command Line Tools。"
+      alert "flow-starter" "缺少 Swift 编译器，无法打开多行输入弹窗。请先安装 Xcode Command Line Tools。"
       exit 1
     fi
     mkdir -p "$BUILD_CACHE"
@@ -48,20 +48,20 @@ ensure_prompt_helper() {
 }
 
 ask_text() {
-  "$PROMPT_BIN" text --title "StudyFlow" --message "$1" --default "${2:-}" --rows "${3:-3}"
+  "$PROMPT_BIN" text --title "flow-starter" --message "$1" --default "${2:-}" --rows "${3:-3}"
 }
 
 ask_choice() {
-  "$PROMPT_BIN" choice --title "StudyFlow" --message "$1" --choices "$2" --default "$3"
+  "$PROMPT_BIN" choice --title "flow-starter" --message "$1" --choices "$2" --default "$3"
 }
 
 ask_confirm() {
-  "$PROMPT_BIN" confirm --title "StudyFlow" --message "$1" --yes "${2:-是}" --no "${3:-否}"
+  "$PROMPT_BIN" confirm --title "flow-starter" --message "$1" --yes "${2:-是}" --no "${3:-否}"
 }
 
 PYTHON_BIN="$(command -v python3 || true)"
 if [[ -z "$PYTHON_BIN" ]]; then
-  alert "StudyFlow" "没有找到 python3。可以先安装 Xcode Command Line Tools，或继续用已配置好的 Terminal 入口。"
+  alert "flow-starter" "没有找到 python3。可以先安装 Xcode Command Line Tools，或继续用已配置好的 Terminal 入口。"
   exit 1
 fi
 
@@ -75,7 +75,7 @@ option="$(ask_choice "选择排程策略" "risk_first|core_order|quick_wins" "ri
 
 if [[ "$mode" == "修正上一版计划" ]]; then
   changes="$(ask_text "想怎么修正上一版计划？可以写多行，比如调整顺序、合并、删减、补充。" "" 6)" || exit 0
-  replace_calendar_choice="$(ask_confirm "导入修正版前，删除未来 21 天内旧的 StudyFlow 日历块吗？建议删除，避免旧版和新版并列。" "删除旧块" "保留旧块")" || exit 0
+  replace_calendar_choice="$(ask_confirm "导入修正版前，删除未来 21 天内旧的 flow-starter 日历块吗？建议删除，避免旧版和新版并列。" "删除旧块" "保留旧块")" || exit 0
   open_claude_choice="$(ask_confirm "完成后打开 Claude？" "打开" "不打开")" || exit 0
   run_focus_choice="$(ask_confirm "生成修正版后，立即进入逐项任务弹窗？" "进入" "暂不")" || exit 0
   args=(
@@ -116,33 +116,33 @@ if [[ "$open_claude_choice" == "yes" ]]; then
   args+=("--open-claude")
 fi
 
-notify "StudyFlow" "正在生成计划、日历提醒和 Obsidian 笔记。"
+notify "flow-starter" "正在生成计划、日历提醒和 Obsidian 笔记。"
 set +e
 {
-  echo "StudyFlow app run"
+  echo "flow-starter app run"
   date
   printf 'Project: %s\n\n' "$PROJECT_ROOT"
-  "$PYTHON_BIN" -m studyflow "${args[@]}"
+  "$PYTHON_BIN" -m flow_starter "${args[@]}"
 } >"$LOG_FILE" 2>&1
 status=$?
 set -e
 
 if [[ "$status" -eq 0 ]]; then
-  notify "StudyFlow" "完成。Calendar、Obsidian 和 Claude 已按设置打开。"
+  notify "flow-starter" "完成。Calendar、Obsidian 和 Claude 已按设置打开。"
   if [[ "$run_focus_choice" == "yes" ]]; then
-    "$PROJECT_ROOT/scripts/studyflow_task_runner.sh" "$option" >>"$LOG_FILE" 2>&1 || true
+    "$PROJECT_ROOT/scripts/flow-starter-task-runner.sh" "$option" >>"$LOG_FILE" 2>&1 || true
   fi
   success_message="$(printf '完成：计划、提醒和笔记已经处理。\n\n日志：%s' "$LOG_FILE")"
-  button="$(show_log_choice "StudyFlow" "$success_message")" || true
+  button="$(show_log_choice "flow-starter" "$success_message")" || true
   if [[ "$button" == "打开日志" ]]; then
     open "$LOG_FILE"
   fi
   exit 0
 fi
 
-simple_error="$("$PYTHON_BIN" -m studyflow.mac_form summarize-error "$LOG_FILE" 2>/dev/null || echo "运行失败，请打开日志查看完整信息。")"
+simple_error="$("$PYTHON_BIN" -m flow_starter.mac_form summarize-error "$LOG_FILE" 2>/dev/null || echo "运行失败，请打开日志查看完整信息。")"
 failure_message="$(printf '%s\n\n完整日志：%s' "$simple_error" "$LOG_FILE")"
-button="$(show_log_choice "StudyFlow" "$failure_message")" || true
+button="$(show_log_choice "flow-starter" "$failure_message")" || true
 if [[ "$button" == "打开日志" ]]; then
   open "$LOG_FILE"
 fi

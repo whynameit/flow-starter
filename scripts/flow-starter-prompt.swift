@@ -50,7 +50,7 @@ func plainAlert(title: String, message: String) -> NSAlert {
 
 func runTextPrompt() -> Never {
     activateApp()
-    let title = option("--title", default: "StudyFlow")
+    let title = option("--title", default: "flow-starter")
     let message = option("--message")
     let defaultText = option("--default")
     let rows = max(1, min(12, Int(option("--rows", default: "3")) ?? 3))
@@ -91,7 +91,7 @@ func runTextPrompt() -> Never {
 
 func runChoicePrompt() -> Never {
     activateApp()
-    let title = option("--title", default: "StudyFlow")
+    let title = option("--title", default: "flow-starter")
     let message = option("--message")
     let rawChoices = option("--choices")
     let defaultChoice = option("--default")
@@ -120,7 +120,7 @@ func runChoicePrompt() -> Never {
 
 func runConfirmPrompt() -> Never {
     activateApp()
-    let title = option("--title", default: "StudyFlow")
+    let title = option("--title", default: "flow-starter")
     let message = option("--message")
     let yes = option("--yes", default: "是")
     let no = option("--no", default: "否")
@@ -145,5 +145,5 @@ case "choice":
 case "confirm":
     runConfirmPrompt()
 default:
-    printAndExit("Usage: studyflow_prompt text|choice|confirm", code: 2)
+    printAndExit("Usage: flow-starter-prompt text|choice|confirm", code: 2)
 }

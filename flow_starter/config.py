@@ -6,7 +6,7 @@ from typing import Dict
 
 
 DEFAULT_OBSIDIAN_VAULT = Path("/Users/rh/Documents/Obsidian Vault")
-DEFAULT_DATA_DIR = Path(".studyflow")
+DEFAULT_DATA_DIR = Path(".flow-starter")
 DEFAULT_PLANS_DIR = DEFAULT_DATA_DIR / "plans"
 
 

@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from studyflow.mac_form import build_start_argv, parse_form, render_form, summarize_error
+from flow_starter.mac_form import build_start_argv, parse_form, render_form, summarize_error
 
 
 class MacFormTests(unittest.TestCase):
@@ -46,7 +46,7 @@ Claude API key is valid, but the Anthropic API account has no available credits.
         self.assertEqual(summarize_error(text), "Anthropic API 余额不足。")
 
     def test_summarize_error_handles_calendar_permission(self) -> None:
-        text = "无法删除旧 StudyFlow 日历块。请检查 Calendar 权限。"
+        text = "无法删除旧 flow-starter 日历块。请检查 Calendar 权限。"
 
         self.assertIn("无法删除旧日历块", summarize_error(text))
 

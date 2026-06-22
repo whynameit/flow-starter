@@ -1,6 +1,6 @@
 import unittest
 
-from studyflow.cli import revision_history_from_payload
+from flow_starter.cli import revision_history_from_payload
 
 
 class RevisionHistoryTests(unittest.TestCase):

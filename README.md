@@ -12,7 +12,7 @@
 - 导出 Apple Calendar `.ics` 提醒。
 - 写入 Obsidian 学习笔记。
 - 支持多轮修正任务顺序、合并、删减和时间偏好。
-- 修正计划时可删除旧的 StudyFlow 日历块，避免新版旧版并列。
+- 修正计划时可删除旧的 flow-starter 日历块，避免新版旧版并列。
 - 支持逐项任务弹窗，记录实际用时并改进以后估时。
 
 ## 配置
@@ -36,7 +36,7 @@ CLAUDE_MODEL=claude-sonnet-4-5
 OBSIDIAN_VAULT=/Users/你的用户名/Documents/Obsidian Vault
 BLOG_SITE_DIR=/Users/你的用户名/Documents/your-blog
 BLOG_BASE_URL=https://example.github.io
-STUDYFLOW_BUSY=/Users/你的用户名/Downloads/學生課表.xlsx
+FLOW_STARTER_BUSY=/Users/你的用户名/Downloads/學生課表.xlsx
 ```
 
 不要把 `.env` 提交到 GitHub。
@@ -46,13 +46,13 @@ STUDYFLOW_BUSY=/Users/你的用户名/Downloads/學生課表.xlsx
 在 Finder 中双击：
 
 ```text
-StudyFlow.app
+flow-starter.app
 ```
 
 如果 macOS 拦截，也可以双击：
 
 ```text
-StudyFlow.command
+flow-starter.command
 ```
 
 启动后可以选择：

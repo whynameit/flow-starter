@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime
 
-from studyflow.models import BusySlot, TaskBlock
-from studyflow.scheduler import SchedulePlanner
+from flow_starter.models import BusySlot, TaskBlock
+from flow_starter.scheduler import SchedulePlanner
 
 
 class SchedulerTests(unittest.TestCase):

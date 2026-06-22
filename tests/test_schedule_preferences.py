@@ -1,6 +1,6 @@
 import unittest
 
-from studyflow.schedule_preferences import extract_schedule_preferences, merge_schedule_preferences
+from flow_starter.schedule_preferences import extract_schedule_preferences, merge_schedule_preferences
 
 
 class SchedulePreferenceTests(unittest.TestCase):

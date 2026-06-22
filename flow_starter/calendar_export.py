@@ -19,7 +19,7 @@ def option_to_ics(option: ScheduleOption, batch_label: str = "") -> str:
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//StudyFlow//Learning Workflow//CN",
+        "PRODID:-//flow-starter//Learning Workflow//CN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
     ]
@@ -33,7 +33,7 @@ def session_to_event(session: ScheduledSession, batch_label: str = "") -> Iterab
     uid_parts = [session.option_id, str(session.sequence), session.task_id]
     if batch_label:
         uid_parts.insert(0, safe_uid_part(batch_label))
-    uid = f"{'-'.join(uid_parts)}@studyflow.local"
+    uid = f"{'-'.join(uid_parts)}@flow-starter.local"
     description = escape_ics_text(session.prompt)
     prefix = display_prefix(batch_label)
     return [
@@ -64,8 +64,8 @@ def safe_uid_part(value: str) -> str:
 
 def display_prefix(batch_label: str = "") -> str:
     if batch_label.strip().startswith("修正"):
-        return "StudyFlow 修正"
-    return "StudyFlow"
+        return "flow-starter 修正"
+    return "flow-starter"
 
 
 def display_title(value: str) -> str:

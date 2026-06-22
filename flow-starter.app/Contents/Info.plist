@@ -6,13 +6,13 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>zh_CN</string>
   <key>CFBundleExecutable</key>
-  <string>StudyFlow</string>
+  <string>flow-starter</string>
   <key>CFBundleIdentifier</key>
-  <string>local.studyflow.assistant</string>
+  <string>local.flow-starter.assistant</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>StudyFlow</string>
+  <string>flow-starter</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

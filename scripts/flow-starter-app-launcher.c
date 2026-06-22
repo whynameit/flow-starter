@@ -27,7 +27,7 @@ int main(void) {
     strncpy(root_path, resolved_path, sizeof(root_path) - 1);
     root_path[sizeof(root_path) - 1] = '\0';
 
-    // /Project/StudyFlow.app/Contents/MacOS/StudyFlow -> /Project
+    // /Project/flow-starter.app/Contents/MacOS/flow-starter -> /Project
     for (int i = 0; i < 4; i++) {
         char *parent = parent_dir(root_path);
         if (parent == NULL) {
@@ -40,7 +40,7 @@ int main(void) {
     int written = snprintf(
         launcher_path,
         sizeof(launcher_path),
-        "%s/scripts/studyflow_mac_launcher.sh",
+        "%s/scripts/flow-starter-mac-launcher.sh",
         root_path
     );
     if (written < 0 || written >= (int)sizeof(launcher_path)) {

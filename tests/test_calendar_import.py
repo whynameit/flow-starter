@@ -2,7 +2,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from studyflow.calendar_import import read_busy_slots_csv, read_busy_slots_ics, read_busy_slots_xlsx
+from flow_starter.calendar_import import read_busy_slots_csv, read_busy_slots_ics, read_busy_slots_xlsx
 
 
 class CalendarImportTests(unittest.TestCase):

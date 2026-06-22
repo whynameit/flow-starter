@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime
 
-from studyflow.claude_client import build_json_repair_prompt, build_revision_prompt, format_api_error, is_placeholder_api_key
-from studyflow.models import Goal, TaskBlock
+from flow_starter.claude_client import build_json_repair_prompt, build_revision_prompt, format_api_error, is_placeholder_api_key
+from flow_starter.models import Goal, TaskBlock
 
 
 class ClaudeClientTests(unittest.TestCase):

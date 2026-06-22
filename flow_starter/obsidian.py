@@ -12,7 +12,7 @@ def slugify(value: str, max_length: int = 60) -> str:
     text = value.lower().strip()
     text = re.sub(r"[^\w\u4e00-\u9fff]+", "-", text)
     text = re.sub(r"-+", "-", text).strip("-")
-    return (text[:max_length].strip("-") or "studyflow-note")
+    return (text[:max_length].strip("-") or "flow-starter-note")
 
 
 def write_goal_note(
@@ -20,7 +20,7 @@ def write_goal_note(
     tasks: list[TaskBlock],
     option: ScheduleOption,
     vault_path: Path,
-    folder: str = "StudyFlow",
+    folder: str = "flow-starter",
 ) -> Path:
     note_dir = vault_path.expanduser() / folder
     note_dir.mkdir(parents=True, exist_ok=True)
@@ -48,7 +48,7 @@ def render_goal_note(goal: Goal, tasks: list[TaskBlock], option: ScheduleOption)
         )
 
     return f"""---
-type: studyflow-goal
+type: flow-starter-goal
 status: active
 deadline: {format_dt(goal.deadline)}
 created: {format_dt(goal.created_at)}

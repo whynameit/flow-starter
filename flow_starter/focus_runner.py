@@ -11,13 +11,13 @@ from .history import append_record
 from .models import format_dt, parse_dt
 
 
-DEFAULT_PLAN_PATH = Path(".studyflow/plans/latest.json")
-DEFAULT_STATE_PATH = Path(".studyflow/focus-state.json")
-DEFAULT_HISTORY_PATH = Path(".studyflow/history.csv")
+DEFAULT_PLAN_PATH = Path(".flow-starter/plans/latest.json")
+DEFAULT_STATE_PATH = Path(".flow-starter/focus-state.json")
+DEFAULT_HISTORY_PATH = Path(".flow-starter/history.csv")
 
 
 def main(argv: List[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="studyflow-focus")
+    parser = argparse.ArgumentParser(prog="flow-starter-focus")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init = subparsers.add_parser("init")

@@ -7,7 +7,7 @@ import time
 import unittest
 from pathlib import Path
 
-from studyflow.focus_runner import main as focus_main
+from flow_starter.focus_runner import main as focus_main
 
 
 class FocusRunnerTests(unittest.TestCase):

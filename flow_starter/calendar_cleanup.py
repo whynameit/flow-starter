@@ -4,7 +4,7 @@ import subprocess
 from typing import List
 
 
-def delete_future_studyflow_events(prefix: str = "StudyFlow", lookahead_days: int = 21) -> int:
+def delete_future_flow_starter_events(prefix: str = "flow-starter", lookahead_days: int = 21) -> int:
     result = subprocess.run(
         build_delete_events_command(prefix=prefix, lookahead_days=lookahead_days),
         check=False,
@@ -14,7 +14,7 @@ def delete_future_studyflow_events(prefix: str = "StudyFlow", lookahead_days: in
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
         raise RuntimeError(
-            "无法删除旧 StudyFlow 日历块。请检查 Calendar 权限，或在修正时选择保留旧块。"
+            "无法删除旧 flow-starter 日历块。请检查 Calendar 权限，或在修正时选择保留旧块。"
             + (f" 详情：{detail}" if detail else "")
         )
 

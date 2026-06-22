@@ -43,7 +43,7 @@ date: {datetime.now().strftime('%Y-%m-%d')}
 draft: true
 tags:
   - learning
-  - studyflow
+  - flow-starter
 ---
 
 ## 学习目标
@@ -77,7 +77,7 @@ def render_al_folio_draft(goal: Goal, tasks: list[TaskBlock], option: ScheduleOp
     blog_author = os.environ.get("BLOG_AUTHOR", "whynameit")
     blog_title = os.environ.get("BLOG_TITLE", "rh's blog")
     blog_base_url = os.environ.get("BLOG_BASE_URL", "https://whynameit.github.io").rstrip("/")
-    citation_key = f"studyflow{year}{ascii_identifier(goal.title)}"
+    citation_key = f"flowstarter{year}{ascii_identifier(goal.title)}"
     task_lines = "\n".join(
         f"- **{task.title}**：{task.outcome}" for task in tasks
     )
@@ -90,7 +90,7 @@ layout: post
 title: "{title}"
 date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 description: "{description}"
-tags: [learning, studyflow]
+tags: [learning, flow-starter]
 categories: [learning-notes]
 featured: false
 giscus_comments: false
@@ -98,7 +98,7 @@ toc:
   sidebar: left
 ---
 
-> TL;DR: 这是一份从 StudyFlow 生成的公开学习草稿。私人思考、课程细节和未整理内容仍保留在 Obsidian 中。
+> TL;DR: 这是一份从 flow-starter 生成的公开学习草稿。私人思考、课程细节和未整理内容仍保留在 Obsidian 中。
 
 ## 1. 学习目标
 
@@ -147,11 +147,11 @@ def build_description(goal: Goal, tasks: list[TaskBlock]) -> str:
         return goal.description[:120]
     if tasks:
         return f"围绕{tasks[0].title}等任务整理的学习计划与技术理解草稿。"
-    return "StudyFlow 生成的学习计划与技术理解草稿。"
+    return "flow-starter 生成的学习计划与技术理解草稿。"
 
 
 def ascii_identifier(value: str) -> str:
     text = re.sub(r"[^a-z0-9]+", "", value.lower())
     if text:
         return text[:32]
-    return "studyflow" + hashlib.sha1(value.encode("utf-8")).hexdigest()[:8]
+    return "flowstarter" + hashlib.sha1(value.encode("utf-8")).hexdigest()[:8]

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .blog_export import write_blog_draft
-from .calendar_cleanup import delete_future_studyflow_events
+from .calendar_cleanup import delete_future_flow_starter_events
 from .calendar_export import write_option_ics
 from .calendar_import import read_busy_slots
 from .claude_client import (
@@ -31,7 +31,7 @@ from .schedule_preferences import extract_schedule_preferences, merge_schedule_p
 from .scheduler import SchedulePlanner
 
 DEFAULT_BUSY_PATH = Path("/Users/rh/Downloads/學生課表20260619232245.xlsx")
-DEFAULT_CALENDAR_ICS = Path(".studyflow/selected-plan.ics")
+DEFAULT_CALENDAR_ICS = Path(".flow-starter/selected-plan.ics")
 
 
 def main(argv: List[str] | None = None) -> None:
@@ -42,7 +42,7 @@ def main(argv: List[str] | None = None) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="studyflow")
+    parser = argparse.ArgumentParser(prog="flow-starter")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     plan = subparsers.add_parser("plan", help="Decompose a goal and generate schedule options.")
@@ -76,12 +76,12 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--no-calendar", action="store_true")
     start.add_argument("--no-obsidian", action="store_true")
     start.add_argument("--obsidian-vault", default=str(DEFAULT_OBSIDIAN_VAULT))
-    start.add_argument("--obsidian-folder", default="StudyFlow")
+    start.add_argument("--obsidian-folder", default="flow-starter")
     start.add_argument("--no-open", action="store_true")
     start.add_argument("--open-claude", action="store_true", help="Open Claude after exporting Calendar and Obsidian.")
     start.set_defaults(func=cmd_start)
 
-    revise = subparsers.add_parser("revise", help="Revise the latest plan with Claude and replace old StudyFlow calendar blocks.")
+    revise = subparsers.add_parser("revise", help="Revise the latest plan with Claude and replace old flow-starter calendar blocks.")
     revise.add_argument("--changes", required=True)
     revise.add_argument("--plan", default=str(DEFAULT_PLANS_DIR / "latest.json"))
     revise.add_argument("--option", default="")
@@ -94,7 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
     revise.add_argument("--no-overflow", action="store_true")
     revise.add_argument("--out", default=str(DEFAULT_PLANS_DIR / "latest.json"))
     revise.add_argument("--calendar-ics", default="")
-    revise.add_argument("--keep-old-calendar", action="store_true", help="Do not delete old future StudyFlow calendar events before import.")
+    revise.add_argument("--keep-old-calendar", action="store_true", help="Do not delete old future flow-starter calendar events before import.")
     revise.add_argument("--replace-calendar-days", type=int, default=21)
     revise.add_argument("--no-open", action="store_true")
     revise.add_argument("--open-claude", action="store_true")
@@ -113,7 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
     commit.add_argument("--calendar-ics", default="")
     commit.add_argument("--write-obsidian", action="store_true")
     commit.add_argument("--obsidian-vault", default=str(DEFAULT_OBSIDIAN_VAULT))
-    commit.add_argument("--obsidian-folder", default="StudyFlow")
+    commit.add_argument("--obsidian-folder", default="flow-starter")
     commit.set_defaults(func=cmd_commit)
 
     export_blog = subparsers.add_parser("export-blog", help="Export a public blog draft from a plan.")
@@ -134,7 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     record.add_argument("--actual-minutes", type=int, required=True)
     record.add_argument("--status", default="done")
     record.add_argument("--note", default="")
-    record.add_argument("--history", default=".studyflow/history.csv")
+    record.add_argument("--history", default=".flow-starter/history.csv")
     record.set_defaults(func=cmd_record)
 
     return parser
@@ -249,7 +249,7 @@ def cmd_revise(args: argparse.Namespace) -> None:
 
     busy_paths = resolve_busy_paths(args.busy)
     busy_slots = read_busy_slots(busy_paths)
-    effective_risk_multiplier = args.risk_multiplier or estimate_personal_multiplier(Path(".studyflow/history.csv"))
+    effective_risk_multiplier = args.risk_multiplier or estimate_personal_multiplier(Path(".flow-starter/history.csv"))
     planner = SchedulePlanner(
         working_day_start=working_day_start,
         working_day_end=working_day_end,
@@ -283,23 +283,23 @@ def cmd_revise(args: argparse.Namespace) -> None:
     print_plan_summary(options)
 
     option = load_option(find_option(revised_payload, option_id))
-    calendar_path = Path(args.calendar_ics) if args.calendar_ics else Path(f".studyflow/revised-plan-{stamp}.ics")
+    calendar_path = Path(args.calendar_ics) if args.calendar_ics else Path(f".flow-starter/revised-plan-{stamp}.ics")
     calendar_path = write_option_ics(option, calendar_path, batch_label=batch_label)
     print(f"Revision Calendar ICS written: {calendar_path}")
 
     if not args.no_open:
         if not args.keep_old_calendar:
-            deleted = delete_future_studyflow_events(lookahead_days=args.replace_calendar_days)
-            print(f"Deleted old future StudyFlow calendar events: {deleted}")
+            deleted = delete_future_flow_starter_events(lookahead_days=args.replace_calendar_days)
+            print(f"Deleted old future flow-starter calendar events: {deleted}")
         else:
-            print("Kept old future StudyFlow calendar events.")
+            print("Kept old future flow-starter calendar events.")
         open_target(str(calendar_path))
         if args.open_claude:
             open_claude()
 
 
 def cmd_app(args: argparse.Namespace) -> None:
-    launcher = Path(__file__).resolve().parent.parent / "scripts" / "studyflow_mac_launcher.sh"
+    launcher = Path(__file__).resolve().parent.parent / "scripts" / "flow-starter-mac-launcher.sh"
     raise SystemExit(subprocess.run([str(launcher)], check=False).returncode)
 
 
@@ -363,7 +363,7 @@ def generate_plan_payload(
     tasks = get_tasks(goal, use_claude=use_claude)
     busy_slots = read_busy_slots(busy_paths)
 
-    history_path = Path(".studyflow/history.csv")
+    history_path = Path(".flow-starter/history.csv")
     effective_risk_multiplier = risk_multiplier or estimate_personal_multiplier(history_path)
     planner = SchedulePlanner(
         working_day_start=working_day_start,
@@ -396,7 +396,7 @@ def write_plan_payload(payload: Dict[str, Any], out_path: Path) -> None:
 def resolve_busy_paths(paths: List[str]) -> List[str]:
     if paths:
         return paths
-    configured = os.environ.get("STUDYFLOW_BUSY")
+    configured = os.environ.get("FLOW_STARTER_BUSY")
     if configured:
         return [configured]
     if DEFAULT_BUSY_PATH.exists():

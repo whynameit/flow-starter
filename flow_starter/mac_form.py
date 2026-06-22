@@ -21,7 +21,7 @@ def render_form(now: datetime | None = None) -> str:
     value = now or datetime.now()
     start = value.replace(second=0, microsecond=0).strftime("%Y-%m-%d %H:%M")
     deadline = (value + timedelta(days=2)).replace(hour=22, minute=0, second=0, microsecond=0)
-    return f"""# StudyFlow 启动表单
+    return f"""# flow-starter 启动表单
 # 填完后按 Command-S 保存，再回到弹窗点“保存并继续”。
 # 排程策略可填：risk_first、core_order、quick_wins。
 # 使用Claude / 完成后打开Claude 可填：是 或 否。
@@ -130,8 +130,8 @@ def summarize_error(text: str) -> str:
         return "找不到需要的文件，请检查课表或目录路径。"
     if "option not found" in lowered:
         return "排程策略没有找到，请换成 risk_first、core_order 或 quick_wins。"
-    if "无法删除旧 studyflow 日历块" in lowered or "calendar" in lowered and "permission" in lowered:
-        return "无法删除旧日历块。请给 StudyFlow/Terminal 访问 Calendar 的权限，或修正时选择保留旧块。"
+    if "无法删除旧 flow-starter 日历块" in lowered or "calendar" in lowered and "permission" in lowered:
+        return "无法删除旧日历块。请给 flow-starter/Terminal 访问 Calendar 的权限，或修正时选择保留旧块。"
 
     for line in reversed(text.splitlines()):
         stripped = line.strip()
@@ -165,7 +165,7 @@ def run_form(path: Path) -> int:
 def main(argv: List[str] | None = None) -> None:
     args = argv or sys.argv[1:]
     if len(args) < 2 or args[0] not in {"write", "run", "summarize-error"}:
-        raise SystemExit("Usage: python -m studyflow.mac_form write|run|summarize-error PATH")
+        raise SystemExit("Usage: python -m flow_starter.mac_form write|run|summarize-error PATH")
 
     command = args[0]
     path = Path(args[1])
