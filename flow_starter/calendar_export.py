@@ -35,19 +35,19 @@ def session_to_event(session: ScheduledSession, batch_label: str = "") -> Iterab
         uid_parts.insert(0, safe_uid_part(batch_label))
     uid = f"{'-'.join(uid_parts)}@flow-starter.local"
     description = escape_ics_text(session.prompt)
-    prefix = display_prefix(batch_label)
+    title = display_title(session.title)
     return [
         "BEGIN:VEVENT",
         f"UID:{uid}",
         f"DTSTAMP:{format_ics_datetime(datetime.utcnow())}",
         f"DTSTART:{format_ics_datetime(session.start)}",
         f"DTEND:{format_ics_datetime(session.end)}",
-        f"SUMMARY:{escape_ics_text(prefix + '：' + display_title(session.title))}",
+        f"SUMMARY:{escape_ics_text(title)}",
         f"DESCRIPTION:{description}",
         "BEGIN:VALARM",
         "TRIGGER:PT0M",
         "ACTION:DISPLAY",
-        f"DESCRIPTION:{escape_ics_text('开始：' + session.title)}",
+        f"DESCRIPTION:{escape_ics_text('开始：' + title)}",
         "END:VALARM",
         "END:VEVENT",
     ]
@@ -62,14 +62,26 @@ def safe_uid_part(value: str) -> str:
     return text.strip("-") or "revision"
 
 
-def display_prefix(batch_label: str = "") -> str:
-    if batch_label.strip().startswith("修正"):
-        return "flow-starter 修正"
-    return "flow-starter"
-
-
 def display_title(value: str) -> str:
-    return value.replace("超出截止: ", "超出截止：")
+    text = value.strip()
+    prefixes = (
+        "flow-starter 修正: ",
+        "flow-starter 修正：",
+        "flow-starter：",
+        "修正: ",
+        "修正：",
+        "超出截止: ",
+        "超出截止：",
+    )
+    changed = True
+    while changed:
+        changed = False
+        for prefix in prefixes:
+            if text.startswith(prefix):
+                text = text[len(prefix) :].strip()
+                changed = True
+                break
+    return text
 
 
 def escape_ics_text(value: str) -> str:

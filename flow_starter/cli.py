@@ -27,11 +27,13 @@ from .config import DEFAULT_OBSIDIAN_VAULT, DEFAULT_PLANS_DIR, env_path, load_do
 from .history import append_record, estimate_personal_multiplier
 from .models import Goal, ScheduleOption, ScheduledSession, TaskBlock, parse_dt, tasks_from_dicts, to_jsonable
 from .obsidian import build_obsidian_uri, write_goal_note
+from .pomofocus import copy_to_clipboard, open_pomofocus, option_to_pomofocus_text, write_pomofocus_tasks
 from .schedule_preferences import extract_schedule_preferences, merge_schedule_preferences
 from .scheduler import SchedulePlanner
 
 DEFAULT_BUSY_PATH = Path("/Users/rh/Downloads/學生課表20260619232245.xlsx")
 DEFAULT_CALENDAR_ICS = Path(".flow-starter/selected-plan.ics")
+DEFAULT_POMOFOCUS_TASKS = Path(".flow-starter/pomofocus-tasks.txt")
 
 
 def main(argv: List[str] | None = None) -> None:
@@ -77,6 +79,9 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--no-obsidian", action="store_true")
     start.add_argument("--obsidian-vault", default=str(DEFAULT_OBSIDIAN_VAULT))
     start.add_argument("--obsidian-folder", default="flow-starter")
+    start.add_argument("--pomofocus", action="store_true", help="Write tasks for Pomofocus, copy them, and open Pomofocus.")
+    start.add_argument("--pomofocus-tasks", default=str(DEFAULT_POMOFOCUS_TASKS))
+    start.add_argument("--pomofocus-app", default="", help="Override Pomofocus app path.")
     start.add_argument("--no-open", action="store_true")
     start.add_argument("--open-claude", action="store_true", help="Open Claude after exporting Calendar and Obsidian.")
     start.set_defaults(func=cmd_start)
@@ -96,6 +101,9 @@ def build_parser() -> argparse.ArgumentParser:
     revise.add_argument("--calendar-ics", default="")
     revise.add_argument("--keep-old-calendar", action="store_true", help="Do not delete old future flow-starter calendar events before import.")
     revise.add_argument("--replace-calendar-days", type=int, default=21)
+    revise.add_argument("--pomofocus", action="store_true", help="Write revised tasks for Pomofocus, copy them, and open Pomofocus.")
+    revise.add_argument("--pomofocus-tasks", default=str(DEFAULT_POMOFOCUS_TASKS))
+    revise.add_argument("--pomofocus-app", default="", help="Override Pomofocus app path.")
     revise.add_argument("--no-open", action="store_true")
     revise.add_argument("--open-claude", action="store_true")
     revise.set_defaults(func=cmd_revise)
@@ -114,6 +122,9 @@ def build_parser() -> argparse.ArgumentParser:
     commit.add_argument("--write-obsidian", action="store_true")
     commit.add_argument("--obsidian-vault", default=str(DEFAULT_OBSIDIAN_VAULT))
     commit.add_argument("--obsidian-folder", default="flow-starter")
+    commit.add_argument("--pomofocus", action="store_true")
+    commit.add_argument("--pomofocus-tasks", default=str(DEFAULT_POMOFOCUS_TASKS))
+    commit.add_argument("--pomofocus-app", default="")
     commit.set_defaults(func=cmd_commit)
 
     export_blog = subparsers.add_parser("export-blog", help="Export a public blog draft from a plan.")
@@ -200,11 +211,22 @@ def cmd_start(args: argparse.Namespace) -> None:
         print(f"Obsidian note written: {note_path}")
         print(f"Obsidian URI: {obsidian_uri}")
 
+    pomofocus_text = ""
+    if args.pomofocus:
+        pomofocus_path = write_pomofocus_tasks(option, Path(args.pomofocus_tasks))
+        pomofocus_text = option_to_pomofocus_text(option)
+        print(f"Pomofocus tasks written: {pomofocus_path}")
+
     if not args.no_open:
         if calendar_path:
             open_target(str(calendar_path))
         if obsidian_uri:
             open_target(obsidian_uri)
+        if args.pomofocus:
+            copied = copy_to_clipboard(pomofocus_text)
+            target = open_pomofocus(args.pomofocus_app)
+            print(f"Pomofocus opened: {target}")
+            print(f"Pomofocus clipboard: {'copied' if copied else 'not copied'}")
         if args.open_claude:
             open_claude()
 
@@ -287,6 +309,12 @@ def cmd_revise(args: argparse.Namespace) -> None:
     calendar_path = write_option_ics(option, calendar_path, batch_label=batch_label)
     print(f"Revision Calendar ICS written: {calendar_path}")
 
+    pomofocus_text = ""
+    if args.pomofocus:
+        pomofocus_path = write_pomofocus_tasks(option, Path(args.pomofocus_tasks))
+        pomofocus_text = option_to_pomofocus_text(option)
+        print(f"Pomofocus tasks written: {pomofocus_path}")
+
     if not args.no_open:
         if not args.keep_old_calendar:
             deleted = delete_future_flow_starter_events(lookahead_days=args.replace_calendar_days)
@@ -294,6 +322,11 @@ def cmd_revise(args: argparse.Namespace) -> None:
         else:
             print("Kept old future flow-starter calendar events.")
         open_target(str(calendar_path))
+        if args.pomofocus:
+            copied = copy_to_clipboard(pomofocus_text)
+            target = open_pomofocus(args.pomofocus_app)
+            print(f"Pomofocus opened: {target}")
+            print(f"Pomofocus clipboard: {'copied' if copied else 'not copied'}")
         if args.open_claude:
             open_claude()
 
@@ -321,6 +354,11 @@ def cmd_doctor(args: argparse.Namespace) -> None:
         print(f"Default WEMUST calendar: found ({DEFAULT_BUSY_PATH})")
     else:
         print(f"Default WEMUST calendar: missing ({DEFAULT_BUSY_PATH})")
+
+    from .pomofocus import find_pomofocus_app
+
+    pomofocus_app = find_pomofocus_app()
+    print(f"Pomofocus app: {'found' if pomofocus_app else 'missing'} ({pomofocus_app or 'https://pomofocus.io/app'})")
 
     vault = env_path("OBSIDIAN_VAULT", DEFAULT_OBSIDIAN_VAULT)
     print(f"Obsidian vault: {'found' if vault.exists() else 'missing'} ({vault})")
@@ -441,8 +479,17 @@ def cmd_commit(args: argparse.Namespace) -> None:
         print(f"Obsidian note written: {note_path}")
         print(f"Obsidian URI: {build_obsidian_uri(vault, note_path)}")
 
-    if not args.calendar_ics and not args.write_obsidian:
-        print("Nothing exported. Add --calendar-ics and/or --write-obsidian.")
+    if args.pomofocus:
+        path = write_pomofocus_tasks(option, Path(args.pomofocus_tasks))
+        text = option_to_pomofocus_text(option)
+        copied = copy_to_clipboard(text)
+        target = open_pomofocus(args.pomofocus_app)
+        print(f"Pomofocus tasks written: {path}")
+        print(f"Pomofocus opened: {target}")
+        print(f"Pomofocus clipboard: {'copied' if copied else 'not copied'}")
+
+    if not args.calendar_ics and not args.write_obsidian and not args.pomofocus:
+        print("Nothing exported. Add --calendar-ics, --write-obsidian, and/or --pomofocus.")
 
 
 def cmd_export_blog(args: argparse.Namespace) -> None:

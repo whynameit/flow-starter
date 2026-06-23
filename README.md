@@ -10,6 +10,7 @@
 - 使用 Claude API 拆解目标和修正任务。
 - 自动生成多个排程方案，默认使用 `risk_first`。
 - 导出 Apple Calendar `.ics` 提醒。
+- 生成 Pomofocus 任务清单，复制到剪贴板并打开 Pomofocus。
 - 写入 Obsidian 学习笔记。
 - 支持多轮修正任务顺序、合并、删减和时间偏好。
 - 修正计划时可删除旧的 flow-starter 日历块，避免新版旧版并列。
@@ -37,6 +38,7 @@ OBSIDIAN_VAULT=/Users/你的用户名/Documents/Obsidian Vault
 BLOG_SITE_DIR=/Users/你的用户名/Documents/your-blog
 BLOG_BASE_URL=https://example.github.io
 FLOW_STARTER_BUSY=/Users/你的用户名/Downloads/學生課表.xlsx
+FLOW_STARTER_POMOFOCUS_APP=/Users/你的用户名/Applications/Chrome Apps.localized/Pomofocus.app
 ```
 
 不要把 `.env` 提交到 GitHub。
@@ -62,6 +64,14 @@ flow-starter.command
 
 新建计划会依次询问目标、补充说明、开始时间、截止时间和排程策略。目标和补充说明支持多行输入。
 
+如果选择发送到 Pomofocus，工具会把本次排出来的任务生成到：
+
+```text
+.flow-starter/pomofocus-tasks.txt
+```
+
+这个文件和剪贴板里都是一行一个任务，括号里会带计划时长和建议番茄数。Pomofocus 目前没有稳定的本地命令行导入接口，所以这里采用更稳的交接方式：打开后把剪贴板内容粘贴进 Pomofocus 的任务区；之后用 Pomofocus 做一会、短休息一会，flow-starter 负责记录任务完成后的实际用时。
+
 修正上一版计划时，可以直接写：
 
 ```text
@@ -85,6 +95,7 @@ flow-starter.command
   --goal "学习一个算法并准备项目面试" \
   --deadline "2026-06-24 22:00" \
   --start "2026-06-22 09:00" \
+  --pomofocus \
   --open-claude
 ```
 

@@ -25,7 +25,7 @@ class CalendarExportTests(unittest.TestCase):
 
         text = option_to_ics(option, batch_label="修正 20260622-2200")
 
-        self.assertIn("SUMMARY:flow-starter 修正：Read paper", text)
+        self.assertIn("SUMMARY:Read paper", text)
         self.assertIn("UID:20260622-2200-risk_first-1-task_1@flow-starter.local", text)
 
     def test_revision_summary_uses_short_overdue_title(self) -> None:
@@ -47,8 +47,9 @@ class CalendarExportTests(unittest.TestCase):
 
         text = option_to_ics(option, batch_label="修正 20260622-223641")
 
-        self.assertIn("SUMMARY:flow-starter 修正：超出截止：Read paper", text)
-        self.assertNotIn("flow-starter 修正 20260622-223641", text)
+        self.assertIn("SUMMARY:Read paper", text)
+        self.assertNotIn("flow-starter 修正", text)
+        self.assertNotIn("超出截止", text)
 
 
 if __name__ == "__main__":

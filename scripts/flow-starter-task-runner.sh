@@ -7,6 +7,8 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 OPTION="${1:-risk_first}"
+USE_POMOFOCUS="${2:-no}"
+POMOFOCUS_APP="${FLOW_STARTER_POMOFOCUS_APP:-/Users/rh/Applications/Chrome Apps.localized/Pomofocus.app}"
 PROMPT_BIN="$PROJECT_ROOT/scripts/flow-starter-prompt"
 PYTHON_BIN="$(command -v python3 || true)"
 
@@ -19,6 +21,14 @@ fi
 
 "$PYTHON_BIN" -m flow_starter.focus_runner init --option "$OPTION" >/dev/null
 
+open_pomofocus() {
+  if [[ -e "$POMOFOCUS_APP" ]]; then
+    open "$POMOFOCUS_APP" >/dev/null 2>&1 || true
+  else
+    open "https://pomofocus.io/app" >/dev/null 2>&1 || true
+  fi
+}
+
 while "$PYTHON_BIN" -m flow_starter.focus_runner has-current >/dev/null 2>&1; do
   title="$("$PYTHON_BIN" -m flow_starter.focus_runner current-title)"
   message="$("$PYTHON_BIN" -m flow_starter.focus_runner current-message)"
@@ -29,7 +39,13 @@ while "$PYTHON_BIN" -m flow_starter.focus_runner has-current >/dev/null 2>&1; do
   fi
 
   started_at="$(date +%s)"
-  finish_message="$(printf '正在做：%s\n\n完成后点“完成 ✓”，我会自动记录实际用时。' "$title")"
+  if [[ "$USE_POMOFOCUS" == "yes" ]]; then
+    printf '%s' "$title" | pbcopy >/dev/null 2>&1 || true
+    open_pomofocus
+    finish_message="$(printf '正在做：%s\n\n已打开 Pomofocus，并把任务名复制到剪贴板。请在 Pomofocus 里开始计时：做一会，短休息一会。这个任务完成后回到这里点“完成 ✓”，我会记录实际用时。' "$title")"
+  else
+    finish_message="$(printf '正在做：%s\n\n完成后点“完成 ✓”，我会自动记录实际用时。' "$title")"
+  fi
   finish_choice="$("$PROMPT_BIN" confirm --title "flow-starter 计时中" --message "$finish_message" --yes "完成 ✓" --no "暂停")" || exit 0
   if [[ "$finish_choice" != "yes" ]]; then
     exit 0

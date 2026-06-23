@@ -76,6 +76,7 @@ option="$(ask_choice "选择排程策略" "risk_first|core_order|quick_wins" "ri
 if [[ "$mode" == "修正上一版计划" ]]; then
   changes="$(ask_text "想怎么修正上一版计划？可以写多行，比如调整顺序、合并、删减、补充。" "" 6)" || exit 0
   replace_calendar_choice="$(ask_confirm "导入修正版前，删除未来 21 天内旧的 flow-starter 日历块吗？建议删除，避免旧版和新版并列。" "删除旧块" "保留旧块")" || exit 0
+  pomofocus_choice="$(ask_confirm "同时把任务交给 Pomofocus？会复制任务清单并打开 Pomofocus。" "发送" "不发送")" || exit 0
   open_claude_choice="$(ask_confirm "完成后打开 Claude？" "打开" "不打开")" || exit 0
   run_focus_choice="$(ask_confirm "生成修正版后，立即进入逐项任务弹窗？" "进入" "暂不")" || exit 0
   args=(
@@ -92,6 +93,7 @@ else
   start_time="$(ask_text "从什么时候开始？格式：YYYY-MM-DD HH:MM" "$DEFAULT_START" 1)" || exit 0
   deadline="$(ask_text "截止时间是什么？格式：YYYY-MM-DD HH:MM" "$DEFAULT_DEADLINE" 1)" || exit 0
   claude_choice="$(ask_confirm "使用 Claude API 拆任务？" "使用" "不用")" || exit 0
+  pomofocus_choice="$(ask_confirm "同时把任务交给 Pomofocus？会复制任务清单并打开 Pomofocus。" "发送" "不发送")" || exit 0
   open_claude_choice="$(ask_confirm "完成后打开 Claude？" "打开" "不打开")" || exit 0
   run_focus_choice="$(ask_confirm "生成计划后，立即进入逐项任务弹窗？" "进入" "暂不")" || exit 0
 
@@ -115,6 +117,9 @@ fi
 if [[ "$open_claude_choice" == "yes" ]]; then
   args+=("--open-claude")
 fi
+if [[ "${pomofocus_choice:-no}" == "yes" ]]; then
+  args+=("--pomofocus")
+fi
 
 notify "flow-starter" "正在生成计划、日历提醒和 Obsidian 笔记。"
 set +e
@@ -128,11 +133,11 @@ status=$?
 set -e
 
 if [[ "$status" -eq 0 ]]; then
-  notify "flow-starter" "完成。Calendar、Obsidian 和 Claude 已按设置打开。"
+  notify "flow-starter" "完成。Calendar、Obsidian、Pomofocus 和 Claude 已按设置处理。"
   if [[ "$run_focus_choice" == "yes" ]]; then
-    "$PROJECT_ROOT/scripts/flow-starter-task-runner.sh" "$option" >>"$LOG_FILE" 2>&1 || true
+    "$PROJECT_ROOT/scripts/flow-starter-task-runner.sh" "$option" "${pomofocus_choice:-no}" >>"$LOG_FILE" 2>&1 || true
   fi
-  success_message="$(printf '完成：计划、提醒和笔记已经处理。\n\n日志：%s' "$LOG_FILE")"
+  success_message="$(printf '完成：计划、提醒、笔记和 Pomofocus 已经处理。\n\n日志：%s' "$LOG_FILE")"
   button="$(show_log_choice "flow-starter" "$success_message")" || true
   if [[ "$button" == "打开日志" ]]; then
     open "$LOG_FILE"
