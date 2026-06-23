@@ -10,7 +10,7 @@
 - 使用 Claude API 拆解目标和修正任务。
 - 自动生成多个排程方案，默认使用 `risk_first`。
 - 导出 Apple Calendar `.ics` 提醒。
-- 生成 Pomofocus 任务清单，复制到剪贴板并打开 Pomofocus。
+- 按任务时长换算番茄数，并自动创建 Pomofocus 任务。
 - 写入 Obsidian 学习笔记。
 - 支持多轮修正任务顺序、合并、删减和时间偏好。
 - 修正计划时可删除旧的 flow-starter 日历块，避免新版旧版并列。
@@ -64,13 +64,19 @@ flow-starter.command
 
 新建计划会依次询问目标、补充说明、开始时间、截止时间和排程策略。目标和补充说明支持多行输入。
 
-如果选择发送到 Pomofocus，工具会把本次排出来的任务生成到：
+如果选择发送到 Pomofocus，工具会按每个任务块的时长换算番茄数，并自动创建到 Pomofocus。备份清单会写到：
 
 ```text
 .flow-starter/pomofocus-tasks.txt
 ```
 
-这个文件和剪贴板里都是一行一个任务，括号里会带计划时长和建议番茄数。Pomofocus 目前没有稳定的本地命令行导入接口，所以这里采用更稳的交接方式：打开后把剪贴板内容粘贴进 Pomofocus 的任务区；之后用 Pomofocus 做一会、短休息一会，flow-starter 负责记录任务完成后的实际用时。
+首次使用自动导入时，需要在 Chrome 菜单里打开一次：
+
+```text
+查看 > 开发者 > 允许 Apple 事件中的 JavaScript
+```
+
+这是 Chrome 的自动化安全开关。打开后，flow-starter 会在 Pomofocus 页面内写入任务：例如 50 分钟会变成 2 个番茄，80 分钟会变成 4 个番茄。之后用 Pomofocus 做一会、短休息一会，flow-starter 负责记录任务完成后的实际用时。
 
 修正上一版计划时，可以直接写：
 

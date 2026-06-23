@@ -132,6 +132,8 @@ def summarize_error(text: str) -> str:
         return "排程策略没有找到，请换成 risk_first、core_order 或 quick_wins。"
     if "无法删除旧 flow-starter 日历块" in lowered or "calendar" in lowered and "permission" in lowered:
         return "无法删除旧日历块。请给 flow-starter/Terminal 访问 Calendar 的权限，或修正时选择保留旧块。"
+    if "apple 事件 javascript" in lowered or "apple event" in lowered and "javascript" in lowered:
+        return "Chrome 还没允许自动创建 Pomofocus 任务。请在 Chrome 菜单“查看 > 开发者 > 允许 Apple 事件中的 JavaScript”打开一次。"
 
     for line in reversed(text.splitlines()):
         stripped = line.strip()

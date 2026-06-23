@@ -27,7 +27,12 @@ from .config import DEFAULT_OBSIDIAN_VAULT, DEFAULT_PLANS_DIR, env_path, load_do
 from .history import append_record, estimate_personal_multiplier
 from .models import Goal, ScheduleOption, ScheduledSession, TaskBlock, parse_dt, tasks_from_dicts, to_jsonable
 from .obsidian import build_obsidian_uri, write_goal_note
-from .pomofocus import copy_to_clipboard, open_pomofocus, option_to_pomofocus_text, write_pomofocus_tasks
+from .pomofocus import (
+    PomofocusImportError,
+    import_option_to_pomofocus,
+    write_pomofocus_import_json,
+    write_pomofocus_tasks,
+)
 from .schedule_preferences import extract_schedule_preferences, merge_schedule_preferences
 from .scheduler import SchedulePlanner
 
@@ -79,8 +84,9 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--no-obsidian", action="store_true")
     start.add_argument("--obsidian-vault", default=str(DEFAULT_OBSIDIAN_VAULT))
     start.add_argument("--obsidian-folder", default="flow-starter")
-    start.add_argument("--pomofocus", action="store_true", help="Write tasks for Pomofocus, copy them, and open Pomofocus.")
+    start.add_argument("--pomofocus", action="store_true", help="Create scheduled tasks in Pomofocus with estimated pomodoro counts.")
     start.add_argument("--pomofocus-tasks", default=str(DEFAULT_POMOFOCUS_TASKS))
+    start.add_argument("--pomofocus-import", default=".flow-starter/pomofocus-import.json")
     start.add_argument("--pomofocus-app", default="", help="Override Pomofocus app path.")
     start.add_argument("--no-open", action="store_true")
     start.add_argument("--open-claude", action="store_true", help="Open Claude after exporting Calendar and Obsidian.")
@@ -101,8 +107,9 @@ def build_parser() -> argparse.ArgumentParser:
     revise.add_argument("--calendar-ics", default="")
     revise.add_argument("--keep-old-calendar", action="store_true", help="Do not delete old future flow-starter calendar events before import.")
     revise.add_argument("--replace-calendar-days", type=int, default=21)
-    revise.add_argument("--pomofocus", action="store_true", help="Write revised tasks for Pomofocus, copy them, and open Pomofocus.")
+    revise.add_argument("--pomofocus", action="store_true", help="Create revised scheduled tasks in Pomofocus with estimated pomodoro counts.")
     revise.add_argument("--pomofocus-tasks", default=str(DEFAULT_POMOFOCUS_TASKS))
+    revise.add_argument("--pomofocus-import", default=".flow-starter/pomofocus-import.json")
     revise.add_argument("--pomofocus-app", default="", help="Override Pomofocus app path.")
     revise.add_argument("--no-open", action="store_true")
     revise.add_argument("--open-claude", action="store_true")
@@ -124,6 +131,7 @@ def build_parser() -> argparse.ArgumentParser:
     commit.add_argument("--obsidian-folder", default="flow-starter")
     commit.add_argument("--pomofocus", action="store_true")
     commit.add_argument("--pomofocus-tasks", default=str(DEFAULT_POMOFOCUS_TASKS))
+    commit.add_argument("--pomofocus-import", default=".flow-starter/pomofocus-import.json")
     commit.add_argument("--pomofocus-app", default="")
     commit.set_defaults(func=cmd_commit)
 
@@ -211,11 +219,11 @@ def cmd_start(args: argparse.Namespace) -> None:
         print(f"Obsidian note written: {note_path}")
         print(f"Obsidian URI: {obsidian_uri}")
 
-    pomofocus_text = ""
     if args.pomofocus:
         pomofocus_path = write_pomofocus_tasks(option, Path(args.pomofocus_tasks))
-        pomofocus_text = option_to_pomofocus_text(option)
+        pomofocus_import_path = write_pomofocus_import_json(option, Path(args.pomofocus_import))
         print(f"Pomofocus tasks written: {pomofocus_path}")
+        print(f"Pomofocus import written: {pomofocus_import_path}")
 
     if not args.no_open:
         if calendar_path:
@@ -223,10 +231,16 @@ def cmd_start(args: argparse.Namespace) -> None:
         if obsidian_uri:
             open_target(obsidian_uri)
         if args.pomofocus:
-            copied = copy_to_clipboard(pomofocus_text)
-            target = open_pomofocus(args.pomofocus_app)
-            print(f"Pomofocus opened: {target}")
-            print(f"Pomofocus clipboard: {'copied' if copied else 'not copied'}")
+            try:
+                result = import_option_to_pomofocus(
+                    option,
+                    app_path=args.pomofocus_app,
+                    tasks_path=Path(args.pomofocus_tasks),
+                    import_path=Path(args.pomofocus_import),
+                )
+            except PomofocusImportError as exc:
+                raise SystemExit(str(exc)) from exc
+            print(f"Pomofocus tasks created: {result.count}")
         if args.open_claude:
             open_claude()
 
@@ -309,11 +323,11 @@ def cmd_revise(args: argparse.Namespace) -> None:
     calendar_path = write_option_ics(option, calendar_path, batch_label=batch_label)
     print(f"Revision Calendar ICS written: {calendar_path}")
 
-    pomofocus_text = ""
     if args.pomofocus:
         pomofocus_path = write_pomofocus_tasks(option, Path(args.pomofocus_tasks))
-        pomofocus_text = option_to_pomofocus_text(option)
+        pomofocus_import_path = write_pomofocus_import_json(option, Path(args.pomofocus_import))
         print(f"Pomofocus tasks written: {pomofocus_path}")
+        print(f"Pomofocus import written: {pomofocus_import_path}")
 
     if not args.no_open:
         if not args.keep_old_calendar:
@@ -323,10 +337,16 @@ def cmd_revise(args: argparse.Namespace) -> None:
             print("Kept old future flow-starter calendar events.")
         open_target(str(calendar_path))
         if args.pomofocus:
-            copied = copy_to_clipboard(pomofocus_text)
-            target = open_pomofocus(args.pomofocus_app)
-            print(f"Pomofocus opened: {target}")
-            print(f"Pomofocus clipboard: {'copied' if copied else 'not copied'}")
+            try:
+                result = import_option_to_pomofocus(
+                    option,
+                    app_path=args.pomofocus_app,
+                    tasks_path=Path(args.pomofocus_tasks),
+                    import_path=Path(args.pomofocus_import),
+                )
+            except PomofocusImportError as exc:
+                raise SystemExit(str(exc)) from exc
+            print(f"Pomofocus tasks created: {result.count}")
         if args.open_claude:
             open_claude()
 
@@ -480,13 +500,17 @@ def cmd_commit(args: argparse.Namespace) -> None:
         print(f"Obsidian URI: {build_obsidian_uri(vault, note_path)}")
 
     if args.pomofocus:
-        path = write_pomofocus_tasks(option, Path(args.pomofocus_tasks))
-        text = option_to_pomofocus_text(option)
-        copied = copy_to_clipboard(text)
-        target = open_pomofocus(args.pomofocus_app)
-        print(f"Pomofocus tasks written: {path}")
-        print(f"Pomofocus opened: {target}")
-        print(f"Pomofocus clipboard: {'copied' if copied else 'not copied'}")
+        try:
+            result = import_option_to_pomofocus(
+                option,
+                app_path=args.pomofocus_app,
+                tasks_path=Path(args.pomofocus_tasks),
+                import_path=Path(args.pomofocus_import),
+            )
+        except PomofocusImportError as exc:
+            raise SystemExit(str(exc)) from exc
+        print(f"Pomofocus tasks written: {result.tasks_path}")
+        print(f"Pomofocus tasks created: {result.count}")
 
     if not args.calendar_ics and not args.write_obsidian and not args.pomofocus:
         print("Nothing exported. Add --calendar-ics, --write-obsidian, and/or --pomofocus.")
