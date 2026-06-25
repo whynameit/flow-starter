@@ -136,6 +136,30 @@ func runConfirmPrompt() -> Never {
     printAndExit("no")
 }
 
+func runNoticePrompt() -> Never {
+    activateApp()
+    let title = option("--title", default: "flow-starter")
+    let message = option("--message")
+    let button = option("--button", default: "好")
+    let duration = max(0, Double(option("--duration", default: "0")) ?? 0)
+
+    let alert = plainAlert(title: title, message: message)
+    alert.addButton(withTitle: button)
+
+    if duration > 0 {
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+            alert.window.close()
+            NSApplication.shared.stopModal(withCode: .abort)
+        }
+    }
+
+    let response = alert.runModal()
+    if response == .alertFirstButtonReturn {
+        printAndExit("ok")
+    }
+    printAndExit("timeout")
+}
+
 let command = CommandLine.arguments.dropFirst().first ?? ""
 switch command {
 case "text":
@@ -144,6 +168,8 @@ case "choice":
     runChoicePrompt()
 case "confirm":
     runConfirmPrompt()
+case "notice":
+    runNoticePrompt()
 default:
-    printAndExit("Usage: flow-starter-prompt text|choice|confirm", code: 2)
+    printAndExit("Usage: flow-starter-prompt text|choice|confirm|notice", code: 2)
 }

@@ -70,7 +70,22 @@ ensure_prompt_helper
 DEFAULT_START="$(date '+%Y-%m-%d %H:%M')"
 DEFAULT_DEADLINE="$(date -v+2d -v22H -v0M -v0S '+%Y-%m-%d %H:%M' 2>/dev/null || date '+%Y-%m-%d 22:00')"
 
-mode="$(ask_choice "要做什么？" "新建计划|修正上一版计划" "新建计划")" || exit 0
+if "$PYTHON_BIN" -m flow_starter.focus_runner has-current >/dev/null 2>&1; then
+  mode="$(ask_choice "要做什么？" "继续逐项任务|新建计划|修正上一版计划" "继续逐项任务")" || exit 0
+else
+  mode="$(ask_choice "要做什么？" "新建计划|修正上一版计划|继续逐项任务" "新建计划")" || exit 0
+fi
+
+if [[ "$mode" == "继续逐项任务" ]]; then
+  pomofocus_choice="$(ask_confirm "继续时同时打开 Pomofocus？如果这组任务已经发给 Pomofocus，建议打开。" "打开" "不打开")" || exit 0
+  notify "flow-starter" "正在恢复逐项任务弹窗。"
+  if "$PROJECT_ROOT/scripts/flow-starter-task-runner.sh" "risk_first" "${pomofocus_choice:-no}" "resume" >>"$LOG_FILE" 2>&1; then
+    exit 0
+  fi
+  alert "flow-starter" "没有恢复成功。可以先新建计划，或打开日志查看原因：$LOG_FILE"
+  exit 0
+fi
+
 option="$(ask_choice "选择排程策略" "risk_first|core_order|quick_wins" "risk_first")" || exit 0
 
 if [[ "$mode" == "修正上一版计划" ]]; then
